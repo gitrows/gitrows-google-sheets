@@ -112,7 +112,7 @@ class GoogleSheetsConnector {
 	async update(data){
 		if (!this.sheet) return Promise.reject(new Error('No Sheet ID specified'));
 		data=_prepareData(data);
-		let batch=[];
+		let request,batch=[];
 		data.values.forEach((item, i) => {
 			batch.push(createUpdateRequest(data.keys[i],[item]))
 		});
