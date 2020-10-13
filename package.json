@@ -1,0 +1,17 @@
+{
+  "name": "@gitrows/gitrows-google-sheets",
+  "version": "0.0.2",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@gitrows/gitrows-utils": "0.0.6",
+    "@gitrows/lambda-response": "^0.3.4",
+    "googleapis": "^61.0.0"
+  }
+}
