@@ -47,14 +47,14 @@ class GoogleSheetsConnector {
 		return tokens;
 	}
 
-	async create(data){
+	async create(title, data){
 		if (!this.client) return Promise.reject(new Error('Unauthorized, please use auth(token) method'));
 		let request,response;
 		request = {
 			auth: this.client,
 			resource: {
 				properties: {
-					title: `strava_activities${this.owner?'_'+this.owner:''}_${Date.now()}`
+					title: title||'GitRows Data Connector'
 				}
 			}
 		};
