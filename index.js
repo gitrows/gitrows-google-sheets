@@ -71,7 +71,6 @@ class GoogleSheetsConnector {
 		if (!this.sheet) return Promise.reject(new Error('No Sheet ID specified'));
 		let request,response,metadata;
 		data=_prepareData(data,order);
-		console.log(data);
 		if (columns&&data.columns){
 			data.values.unshift(data.columns);
 			data.keys.unshift('head');
