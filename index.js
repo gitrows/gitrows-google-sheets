@@ -2,6 +2,7 @@ const {google} = require('googleapis')
 const sheets = google.sheets('v4')
 const response=require('@gitrows/lambda-response')
 const Num = require("@gitrows/gitrows-utils/lib/number.js")
+const Data = require("@gitrows/gitrows-utils/lib/data.js")
 
 class GoogleSheetsConnector {
 
@@ -47,7 +48,7 @@ class GoogleSheetsConnector {
 		return tokens;
 	}
 
-	async create(title, data){
+	async create(title, data, order){
 		if (!this.client) return Promise.reject(new Error('Unauthorized, please use auth(token) method'));
 		let request,response;
 		request = {
@@ -61,15 +62,16 @@ class GoogleSheetsConnector {
 		response=await sheets.spreadsheets.create(request).catch(e=>console.log(e));
 		this.sheet=response.data.spreadsheetId;
 		if(data){
-			response=await this.append(data,true);
+			response=await this.append(data,order,true);
 		}
 		return response;
 	}
 
-	async append(data,columns=false){
+	async append(data,order,columns=false){
 		if (!this.sheet) return Promise.reject(new Error('No Sheet ID specified'));
 		let request,response,metadata;
-		data=_prepareData(data);
+		data=_prepareData(data,order);
+		console.log(data);
 		if (columns&&data.columns){
 			data.values.unshift(data.columns);
 			data.keys.unshift('head');
@@ -109,9 +111,9 @@ class GoogleSheetsConnector {
 		return sheets.spreadsheets.batchUpdate(request).catch(e=>console.log(e));
 	}
 
-	async update(data){
+	async update(data,order){
 		if (!this.sheet) return Promise.reject(new Error('No Sheet ID specified'));
-		data=_prepareData(data);
+		data=_prepareData(data,order);
 		let request,batch=[];
 		data.values.forEach((item, i) => {
 			batch.push(createUpdateRequest(data.keys[i],[item]))
@@ -128,17 +130,17 @@ class GoogleSheetsConnector {
 	}
 }
 
-const _prepareData=(data)=>{
+const _prepareData=(data,order)=>{
 	if (typeof data=='undefined') return data;
-	let result={keys:[],values:[]};
+	let result={keys:[],values:[],columns:[]};
 	if (!Array.isArray(data)) data=[data];
+	result.columns=order||Data.columns(data);
 	data.forEach((item, i) => {
 		if (item.id)
 			result.keys[i]=Num.isNumber(item.id)?Num.baseEncode(item.id):item.id;
 		else
 			result.keys[i]=null;
-		result.values[i]=Object.values(item);
-		result.columns=Object.keys(item);
+		result.values[i]=result.columns.map(x=>typeof item[x]=='object'?JSON.stringify(item[x]):item[x]);
 	});
 	return result;
 }
