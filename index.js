@@ -125,8 +125,67 @@ class GoogleSheetsConnector {
 			},
 			auth: this.client
 		}
-		return sheets.spreadsheets.values.batchUpdateByDataFilter(request);
+		return sheets.spreadsheets.values.batchUpdateByDataFilter(request).catch(e=>console.log(e));
 	}
+
+	async clear(id){
+		if (!this.sheet) return Promise.reject(new Error('No Sheet ID specified'));
+		let request={
+			spreadsheetId:this.sheet,
+			resource: {
+			  "dataFilters": [
+			    {
+			      "developerMetadataLookup": {
+			        "metadataKey": Num.isNumber(id)?Num.baseEncode(id):id
+			      }
+			    }
+			  ]
+			},
+			auth: this.client
+		};
+		let result= await sheets.spreadsheets.values.batchClearByDataFilter(request).catch(e=>console.log(e));
+	}
+
+	async get(id){
+		if (!this.sheet) return Promise.reject(new Error('No Sheet ID specified'));
+		let request={
+			spreadsheetId:this.sheet,
+			resource: {
+			  "dataFilters": [
+			    {
+			      "developerMetadataLookup": {
+			        "metadataKey": Num.isNumber(id)?Num.baseEncode(id):id
+			      }
+			    }
+			  ]
+			},
+			auth: this.client
+		};
+		let res=(await sheets.spreadsheets.values.batchGetByDataFilter(request)).data.valueRanges;
+		return res;
+	}
+
+	async delete(id){
+		if (!this.sheet) return Promise.reject(new Error('No Sheet ID specified'));
+		let response=await this.get(id);
+		if (response){
+			console.log(response);
+			let data=[];
+			response.map(item=>{
+				data.push(createDeleteRowRequest(item.valueRange.range));
+			})
+			let request = {
+				spreadsheetId: this.sheet,
+				resource: {
+					requests: data,
+				},
+				auth: this.client
+			};
+			return sheets.spreadsheets.batchUpdate(request).catch(e=>console.log(e));
+		}
+		return Promise.reject(new Error(`No row for id ${id} in ${this.sheet}`));
+	}
+
 }
 
 const _prepareData=(data,order)=>{
@@ -147,7 +206,7 @@ const _prepareData=(data,order)=>{
 const rangeToRowIndex=(range)=>{
 	range=range.split('!').pop();
 	let[start,end]=range.replace(/[^\d:]/g,'').split(':');
-	const result={start:start?Number(start):null,end:end?Number(end):null};
+	const result={start:start?Number(+start-1):null,end:end&&end!=start?Number(+end-1):Number(+start)};
 	return result;
 }
 
@@ -181,6 +240,21 @@ const createUpdateRequest=(key,data)=>{
 		"majorDimension": "ROWS",
 		"values": data
 	}
+	return request;
+}
+
+const createDeleteRowRequest=(index)=>{
+	if (isNaN(index)) index=rangeToRowIndex(index)['start'];
+	if (isNaN(index)) return null;
+	let request={
+      "deleteDimension": {
+        "range": {
+          "dimension": "ROWS",
+          "startIndex": index,
+          "endIndex": index+1
+        }
+      }
+    };
 	return request;
 }
 
