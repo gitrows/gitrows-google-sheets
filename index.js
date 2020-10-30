@@ -86,6 +86,7 @@ class GoogleSheetsConnector {
 			auth: this.client
 		};
 		response=await sheets.spreadsheets.values.append(request).catch(e=>console.log(e));
+		console.log(response);
 		metadata= await this.addMetadataKeys(response.data.updates.updatedRange,data.keys);
 		return metadata;
 	}
@@ -219,8 +220,8 @@ const createDeveloperMetadataRequest=(index,key)=>{
 				"location": {
 				 "dimensionRange":{
 					 "dimension":"ROWS",
-					 "startIndex":index-1,
-					 "endIndex":index,
+					 "startIndex":index,
+					 "endIndex":index+1,
 				 }
 				},
 				"visibility": "DOCUMENT"
